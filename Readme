@@ -1,0 +1,201 @@
+# Microfinance Loan Portfolio — SQL Project
+
+Domain:** Financial Services | Microfinance
+Tool:**  MySQL
+Dataset:** 300 rows · 15 columns · Synthetic data
+
+## What This Project Is About
+
+A microfinance institution (MFI) gives small loans — between ₹5,000 and ₹30,000 — to low-income borrowers like street vendors, farmers, weavers, and auto-rickshaw drivers across 8 Indian states. These borrowers usually don't have access to regular banks, so the MFI is their only source of credit.
+
+The credit and operations team needs answers from their loan data every day — who is paying late, which officers are doing well, which states are risky, and how much interest the institution will earn. This project answers all of that using SQL.
+
+## Files in This Project
+
+| File | What it contains |
+|---|---|
+| `mfi_loan_data.csv` | The dataset — 300 loan records |
+| `mfi_project_v2.sql` | All SQL code — schema, exploration, and 15 business questions |
+| `README_v2.md` | This file |
+
+## The Dataset
+
+**Table name:** `mfi_loans`
+
+| Column | Type | Description |
+|---|---|---|
+| `loan_id` | TEXT | Unique loan ID (e.g. LN-0001) |
+| `borrower_id` | TEXT | Unique borrower ID (e.g. BRW-0001) |
+| `state` | TEXT | Indian state where the borrower lives |
+| `occupation` | TEXT | What the borrower does for a living |
+| `loan_amount` | REAL | Amount of money given out, in ₹ (INR) |
+| `interest_rate_pct` | REAL | Annual interest rate charged (18%–26%) |
+| `tenure_months` | INTEGER | How long the borrower has to repay (6–24 months) |
+| `disbursement_date` | DATE | The date the loan was handed out |
+| `repayment_frequency` | TEXT | How often the borrower pays — Weekly, Bi-Weekly, or Monthly |
+| `loan_purpose` | TEXT | Why the borrower needed the money |
+| `loan_officer_id` | TEXT | The field officer assigned to this loan |
+| `emi_amount` | REAL | The fixed monthly repayment amount in ₹ |
+| `days_past_due` | INTEGER | How many days the borrower is late (0 = paying on time) |
+| `loan_status` | TEXT | Current state — Active, Closed, or NPA |
+| `credit_score` | INTEGER | Internal score from 300 (poor) to 850 (excellent) |
+
+**A note on loan_status:**
+- **Active** — loan is ongoing and borrower is still repaying
+- **Closed** — loan has been fully repaid
+- **NPA** — Non-Performing Asset; borrower has stopped paying (defaulted)
+
+## How to Run This Project
+
+### MySQL
+```sql
+LOAD DATA INFILE 'mfi_loan_data.csv'
+INTO TABLE mfi_loans
+FIELDS TERMINATED BY ','
+IGNORE 1 ROWS;
+-- Replace STRFTIME('%Y', ...) with YEAR(disbursement_date)
+```
+
+## SQL Concepts Covered
+
+| Concept | Where it appears |
+|---|---|
+| `SELECT`, `FROM`, `WHERE` | BQ-11, BQ-12, BQ-13 |
+| `GROUP BY`, `ORDER BY` | BQ-01 through BQ-10 |
+| `COUNT`, `SUM`, `AVG`, `MIN`, `MAX` | BQ-01 through BQ-14 |
+| `LIMIT` | BQ-06, BQ-07, BQ-13 |
+| `CASE WHEN` | BQ-05, BQ-07 |
+| `DISTINCT` | Data Exploration |
+| Date functions (`STRFTIME`) | BQ-09 |
+| `ROUND` | Throughout |
+| Window function — `RANK() OVER` | BQ-15 |
+
+---
+
+## Business Questions
+
+### Section 1 — Data Exploration
+Five quick queries to understand the data before diving into analysis: total row count, a sample preview, distinct statuses, states covered, and the loan amount range.
+
+---
+
+### BQ-01 — How many loans are Active, Closed, and NPA?
+The very first thing a lending team checks each morning — a count of the portfolio split by loan status, with the total money in each bucket.
+
+**SQL used:** `GROUP BY`, `COUNT`, `SUM`
+
+---
+
+### BQ-02 — Which state has the most loans disbursed?
+The branch expansion team needs to know where the institution is most active. Shows total loans and total money disbursed per state, along with the average loan size.
+
+**SQL used:** `GROUP BY`, `COUNT`, `SUM`, `AVG`, `ORDER BY`
+
+---
+
+### BQ-03 — What are the most common reasons borrowers take loans?
+The product team wants to design loan products for the most popular needs. Shows each loan purpose ranked by how often it appears and the average amount borrowed for it.
+
+**SQL used:** `GROUP BY`, `COUNT`, `AVG`
+
+---
+
+### BQ-04 — Which occupations borrow the most money?
+Helps the credit team understand their customer base — which professions take the most loans and at what sizes.
+
+**SQL used:** `GROUP BY`, `COUNT`, `SUM`, `AVG`, `ORDER BY`
+
+---
+
+### BQ-05 — How many borrowers are paying late?
+A daily collections check. Groups borrowers into four payment buckets — On Time, 1–30 days late, 31–90 days late, and over 90 days late — and shows how much money is at risk in each bucket.
+
+**SQL used:** `CASE WHEN`, `GROUP BY`, `COUNT`, `SUM`
+
+---
+
+### BQ-06 — Which loan officer manages the most loans?
+Operations checks workload balance. An officer managing too many loans might be overstretched and unable to do proper field follow-up.
+
+**SQL used:** `GROUP BY`, `COUNT`, `SUM`, `AVG`, `ORDER BY`, `LIMIT`
+
+---
+
+### BQ-07 — Which loan officer has the most defaulted loans?
+Used in performance reviews. Calculates the NPA percentage for each officer — the ratio of defaulted loans to their total loans managed.
+
+**SQL used:** `GROUP BY`, `COUNT`, `SUM(CASE WHEN ...)`, percentage calculation
+
+---
+
+### BQ-08 — What is the average credit score per state?
+The risk team checks borrower quality by region. States with lower average credit scores may need stricter loan limits or more follow-up.
+
+**SQL used:** `GROUP BY`, `AVG`, `MIN`, `MAX`, `ORDER BY`
+
+---
+
+### BQ-09 — How many loans were given each year?
+Finance tracks year-over-year growth. Shows whether the institution is lending more over time and at what average size.
+
+**SQL used:** `STRFTIME` for date extraction, `GROUP BY`, `COUNT`, `SUM`, `AVG`
+
+---
+
+### BQ-10 — What is the average EMI by repayment frequency?
+The product team wants to understand the repayment burden on borrowers depending on how often they pay — weekly, bi-weekly, or monthly.
+
+**SQL used:** `GROUP BY`, `AVG`, `ORDER BY`
+
+---
+
+### BQ-11 — List all loans where the borrower is late but not yet defaulted
+The collections team's daily follow-up list. These are Active loans where the borrower has missed payments — they need a call or field visit before they slip into NPA.
+
+**SQL used:** `WHERE` with multiple conditions (`AND`), `ORDER BY`
+
+---
+
+### BQ-12 — How much interest income is expected from Active loans?
+Every quarter the CFO asks this. Calculates expected annual interest per state using the formula: `loan_amount × interest_rate / 100`.
+
+**SQL used:** `WHERE`, `GROUP BY`, derived column with arithmetic formula
+
+---
+
+### BQ-13 — What are the top 10 largest loans and their current status?
+Large loans carry more risk. Senior management keeps a close eye on the biggest individual exposures and whether they are being repaid.
+
+**SQL used:** `SELECT`, `ORDER BY`, `LIMIT`
+
+---
+
+### BQ-14 — Does a longer loan tenure mean a larger loan amount?
+The product team tests whether tenure and loan size go hand in hand — useful for deciding which tenure options to offer for which loan sizes.
+
+**SQL used:** `GROUP BY`, `AVG`, `ORDER BY`
+
+---
+
+### BQ-15 ⭐ — Rank loan officers by total portfolio value
+A step up from basic aggregation. Uses a window function to rank all 20 loan officers by the total value of loans they manage — without losing individual row detail.
+
+**SQL used:** `RANK() OVER (ORDER BY ...)`, `GROUP BY`, window function
+
+---
+
+## Key Terms Explained
+
+**DPD (Days Past Due):** The number of days a borrower has missed a payment. A DPD of 0 means they are paying on time.
+
+**NPA (Non-Performing Asset):** A loan where the borrower has stopped repaying. In India, a loan is classified NPA when DPD crosses 90 days.
+
+**EMI (Equated Monthly Instalment):** The fixed amount a borrower pays each month. Calculated using the loan amount, interest rate, and tenure.
+
+**Disbursement:** When the institution actually hands over the loan money to the borrower.
+
+**Loan Officer:** A field employee who visits borrowers, processes applications, and follows up on repayments.
+
+---
+
+*Dataset is synthetically generated for portfolio and learning purposes.*
